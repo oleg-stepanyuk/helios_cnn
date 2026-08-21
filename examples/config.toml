@@ -1,0 +1,144 @@
+# =============================================================================
+# Wavetrack — example configuration
+# =============================================================================
+#
+# This file documents every available option. Sections are independent; any
+# section can be omitted to use defaults. Unknown keys raise an error, so
+# typos are caught early.
+#
+# Preset shown below: CME-shock detection from a difference image (the
+# original "CBF" use-case from Stepanyuk et al. 2022, A&A / J. Space Weather
+# Space Clim. 12, 20, https://doi.org/10.1051/swsc/2022020).
+#
+# Quick-start presets are shown at the bottom of this file.
+# -----------------------------------------------------------------------------
+
+[io]
+# Path to a single input image. Supported: .fits / .fit / .npy / .png / .jpg /
+# .jpeg. Can also be passed on the CLI via -i/--image.
+input_path = "examples/data/sample.fits"
+
+# Where to write outputs. Subfolders ``masks/``, ``scales/`` and
+# ``visualize/`` are created automatically.
+output_dir = "./wavetrack_output"
+
+# HDU index for FITS inputs.
+fits_hdu_index = 0
+
+# Optional resize to a fixed shape ``[height, width]``. Omit or set to a
+# missing key to keep the original shape. Example:
+# resize_to = [512, 512]
+
+# Save intermediate wavelet coefficients and scales (recommended for QA).
+save_intermediate = true
+
+# Also save mask outputs as FITS files (useful for ML pipelines).
+save_fits = false
+
+
+[preprocess]
+# Hard clip raw pixel values before any further processing. Defaults are
+# effectively no-op.
+low_threshold  = -1.0e9
+high_threshold =  1.0e9
+
+# Invert the image after clipping. Set to true for filaments observed
+# against a bright disk (H-alpha, EUV) so they appear bright.
+invert = false
+invert_method = "numeric"   # one of: "numeric", "pil"
+
+# Optional log-compression to tame solar dynamic range.
+log_compress = false
+log_base     = 20.0
+
+# N-bit posterization for numerical stability of σ-thresholding.
+# Set to 0 to disable.
+resolution_bits = 8
+
+# Optional circular solar-disk mask. When enabled, σ-statistics are
+# computed separately on-disk and off-limb (see [threshold]).
+apply_circle_mask = false
+# disk_center_x = 1024     # default: image center
+# disk_center_y = 1024
+# disk_radius   = 980      # required when apply_circle_mask = true
+rsun_coeff = 1.0
+
+# Optional rectangular ROI (pixels outside are zeroed).
+apply_square_mask = false
+square_x1 = 0
+square_x2 = 0
+square_y1 = 0
+square_y2 = 0
+
+
+[wavelet]
+# Number of à-trous decomposition levels J. Produces J wavelet coefficients
+# c_0..c_{J-1} and J-1 detail scales ω_j = c_{j-1} - c_j.
+n_scales = 5
+
+# Per-scale weights used during reconstruction:
+#   reconstructed = c_{J-1} + Σ_{j=1..J-1} weights[j] * ω_j
+# Length must be >= n_scales. The CBF preset below uses [0,1,1,0,0] to keep
+# only the mid-frequency scales associated with the EUV-wave front.
+scales_weights = [0.0, 1.0, 1.0, 0.0, 0.0]
+
+# Reference scale index. A binary mask built from coefficients[reference_scale]
+# is multiplied into the reconstructed image so detected structures are
+# confined to the spatial support of a coarse wavelet level.
+reference_scale = 1
+
+
+[threshold]
+# Apply σ-based thresholding to each wavelet coefficient using a Gaussian
+# fit of the per-coefficient histogram.
+split_disk_limb = false      # set true together with preprocess.apply_circle_mask
+
+# Threshold (in σ units) for on-disk / off-limb pixels. When
+# split_disk_limb = false, sigma_disk is used everywhere.
+sigma_disk = 5.5
+sigma_limb = 5.5
+
+# Threshold applied to the gradient field (used as a diagnostic output).
+sigma_grad = 5.5
+
+
+[segmentation]
+# Gradient operator used for the diagnostic gradient image.
+# One of: "sobel-feldman", "simple", "hagenaer", "none".
+grad_method = "sobel-feldman"
+
+# Drop connected components smaller than this many pixels.
+min_struct_size = 400
+
+# Final one-pass window filter that cleans tiny spurious features.
+window_filt_boxsize   = 10
+window_filt_increment = 1
+window_filt_threshold = 0.0
+
+
+# -----------------------------------------------------------------------------
+# Alternate preset — H-alpha filament detection
+# -----------------------------------------------------------------------------
+# Filaments appear dark against the bright disk, so invert the input first
+# and bias the reconstruction toward larger-scale support. Replace [preprocess]
+# and [wavelet] above with:
+#
+#   [preprocess]
+#   invert = true
+#   resolution_bits = 8
+#   apply_circle_mask = true
+#   disk_radius = 980          # pixels — depends on instrument
+#
+#   [wavelet]
+#   n_scales = 5
+#   scales_weights = [0.0, 0.0, 1.0, 1.0, 0.0]
+#   reference_scale = 2
+#
+#   [threshold]
+#   split_disk_limb = true
+#   sigma_disk = 4.0
+#   sigma_limb = 6.0
+#
+#   [segmentation]
+#   min_struct_size = 200
+# -----------------------------------------------------------------------------

@@ -1,0 +1,8 @@
+numpy>=1.22
+scipy>=1.9
+astropy>=5.0
+imageio>=2.25
+Pillow>=9.0
+matplotlib>=3.5
+# TOML reader for Python < 3.11 (tomllib is in the stdlib from 3.11+)
+tomli>=2.0 ; python_version < "3.11"

@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wavetrack"
+version = "1.0.0"
+description = "À-trous wavelet decomposition and multi-scale object recognition for solar eruptive features."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+    { name = "Oleg Stepanyuk" },
+    { name = "Kamen Kozarev" },
+    { name = "Mohamed Nedal" },
+]
+keywords = ["solar", "wavelet", "image-segmentation", "CME", "filament", "a-trous"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering :: Astronomy",
+    "Topic :: Scientific/Engineering :: Image Processing",
+]
+dependencies = [
+    "numpy>=1.20",
+    "scipy>=1.7",
+    "astropy>=5.0",
+    "imageio>=2.9",
+    "Pillow>=9.0",
+    "matplotlib>=3.4",
+    "tomli>=1.2; python_version<'3.11'",
+]
+
+[project.scripts]
+wavetrack = "wavetrack.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

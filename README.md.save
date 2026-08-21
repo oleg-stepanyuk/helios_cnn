@@ -164,7 +164,7 @@ Section 2.3.2 / Figure 2).
 
 ## Scope
 
-This readme intentionally drops features that were tied to specific
+This rewrite intentionally drops features that were tied to specific
 multi-instrument observing campaigns:
 
 - multi-timestep tracking (LK / Horn-Schunck / FLCT velocity fields)
@@ -172,6 +172,9 @@ multi-instrument observing campaigns:
 - SDO/AIA download utilities
 - multi-input / batch FITS pipelines
 
+If you need those, point this single-image pipeline at the difference frame
+of your choice (e.g. produced upstream with SunPy / AIAprep) and loop in
+your own driver.
 
 ---
 
